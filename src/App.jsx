@@ -15,6 +15,9 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const [sortType, setSortType] = useState("date");
+  const [sortOrder, setSortOrder] = useState("asc");
+
   function toggleSection(section) {
     setIsOpen((prev) => ({
       ...prev,
@@ -38,6 +41,30 @@ function App() {
     );
   }
 
+  function sortTask(tasks) {
+    return tasks.slice().sort((a, b) => {
+      if (sortType === "priority") {
+        const priorityOrder = { High: 1, Medium: 2, Low: 3 };
+        return sortOrder === "asc"
+          ? priorityOrder[a.priority] - priorityOrder[b.priority]
+          : priorityOrder[b.priority] - priorityOrder[a.priority];
+      } else {
+        return sortOrder === "asc"
+          ? new Date(a.deadline) - new Date(b.deadline)
+          : new Date(b.deadline) - new Date(a.deadline);
+      }
+    });
+  }
+
+  function toggleSortOrder(type) {
+    if (sortType === type) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortType(type);
+      setSortOrder("asc");
+    }
+  }
+
   useEffect(() => {
     const storedTasks = localStorage.getItem("toDoTasks");
     if (storedTasks) {
@@ -52,7 +79,7 @@ function App() {
     }
   }, [tasks, isInitialized]);
 
-  const activeTasks = tasks.filter((task) => !task.completed);
+  const activeTasks = sortTask(tasks.filter((task) => !task.completed));
   const completedTasks = tasks.filter((task) => task.completed);
 
   return (
@@ -87,8 +114,24 @@ function App() {
             +
           </button>
           <div className="sort-controls">
-            <button className="sort-button">By Date</button>
-            <button className="sort-button">By Priority</button>
+            <button
+              className={`sort-button ${sortType === "date" ? "active" : ""}`}
+              onClick={() => toggleSortOrder("date")}
+            >
+              By Date
+              {sortType === "date" &&
+                (sortOrder === "asc" ? "\u2191" : "\u2193")}
+            </button>
+            <button
+              className={`sort-button ${
+                sortType === "priority" ? "active" : ""
+              }`}
+              onClick={() => toggleSortOrder("priority")}
+            >
+              By Priority
+              {sortType === "priority" &&
+                (sortOrder === "asc" ? "\u2191" : "\u2193")}
+            </button>
           </div>
           {isOpen.tasks && <TaskList />}
         </div>
